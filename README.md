@@ -8,11 +8,11 @@ TBD
 
 # Configuration
 ### udevmon
-Determine the keyboard name *\<NAME\>* with the command `sudo uinput -p -d /dev/input/by-id/<file>`. Then, create the following file (perhaps in the directory `$XDG_CONFIG_HOME/udevmon`): 
+Determine the keyboard name *\<NAME\>* with the command `sudo uinput -p -d /dev/input/by-id/<file>`. Then, create the following file (perhaps in the directory `$XDG_CONFIG_HOME/udevmon`):
 
 `config.yaml`
 ```yaml
-- JOB: "intercept -g $DEVNODE | hkd-reciever | uinput -d $DEVNODE"
+- JOB: "intercept -g $DEVNODE | hkd-receiver | uinput -d $DEVNODE"
   DEVICE:
     NAME: "<NAME>"
 ```
