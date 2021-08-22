@@ -29,9 +29,10 @@ void write_event(const struct input_event *event) {
 
 
 int main(int argc, char *argv[]) {
-	FILE *cache = fopen(strcat(getenv("XDG_CACHE_HOME"), "/hkd_cache"), "r");
-	char pid[20];
-	fgets(pid, 20, cache);
+	FILE *cache = popen("pidof hkr", "r");
+	char pid_str[20];
+	fgets(pid_str, 20, cache);
+	pid_t pid = strtoul(pid_str, NULL, 10);
 	fclose(cache);
 
 	union sigval message;
@@ -49,15 +50,14 @@ int main(int argc, char *argv[]) {
 
 		switch (input.value) {
 			case INPUT_VAL_PRESS:
-				if (input.code == KEY_A) {
+				if (input.code == KEY_BACKSLASH) {
 					message.sival_int = 1;
-					system("touch YOO");
-					sigqueue(atoi(pid), SIGUSR1, message);
+					sigqueue(pid, SIGUSR1, message);
 				}
 				else write_event(&input);
 				break;
 			case INPUT_VAL_RELEASE:
-				if (input.code == KEY_A) {}
+				if (input.code == KEY_BACKSLASH) {}
 				else write_event(&input);
 				break;
 			case INPUT_VAL_REPEAT:

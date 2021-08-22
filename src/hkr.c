@@ -24,24 +24,20 @@ void run(char *cmd) {
 
 /* catch signal and run associated command from signal number */
 void handle_sig(int signo, siginfo_t *info, void *extra) {
-	run("$TERMINAL");
+	if (info->si_value.sival_int == 1) {
+		run("$TERMINAL");
+	}
 }
 
 
 int main(int argc, char *argv[]) {
-	/* save pid to cache file */
-	FILE *cache = fopen(strcat(getenv("XDG_CACHE_HOME"), "/hkd_cache"), "w");
-	char pid[20];
-	sprintf(pid, "%d\n", getpid());
-	fputs(pid, cache);
-	fclose(cache);
-
 	/* wait for signal */
-	struct sigaction new;
+	struct sigaction action;
 	sigset_t mask;
 	while (1) {
-		new.sa_sigaction = handle_sig;
-		sigaction(SIGUSR1, &new, NULL);
+		action.sa_flags = SA_SIGINFO;
+		action.sa_sigaction = &handle_sig;
+		sigaction(SIGUSR1, &action, NULL);
 		sigsuspend(&mask);
 	}
 }
