@@ -31,8 +31,33 @@ void handle_sig(int signo, siginfo_t *info, void *extra) {
 	}
 }
 
+void
+print_usage(const char *program) {
+	fprintf(stdout,
+			"Hotkey daemon plugin for interception tools:\n"
+			"        https://gitlab.com/interception/linux/tools\n"
+			"\n"
+			"usage: %s [-h | -c CONFIG]\n"
+			"\n"
+			"options:\n"
+			"    -h                   show this message and exit\n"
+			"    -c CONFIG            use custom config location\n",
+			program);
+}
+
 
 int main(int argc, char *argv[]) {
+	int opt;
+	while ((opt = getopt(argc, argv, "hc:")) != -1) {
+		switch (opt) {
+			case 'h':
+				return print_usage( argv[0]), EXIT_SUCCESS;
+			case 'c':
+				/* deal with this later */
+				continue;
+		}
+	}
+
 	/* wait for signal */
 	struct sigaction action;
 	sigset_t mask;

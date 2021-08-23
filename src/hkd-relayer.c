@@ -29,7 +29,7 @@ void write_event(const struct input_event *event) {
 
 int main(int argc, char *argv[]) {
 	/* find hkd pid */
-	FILE *cache = popen("pidof hkr", "r");
+	FILE *cache = popen("pidof hkd", "r");
 	char pid_str[20];
 	fgets(pid_str, 20, cache);
 	pid_t pid = strtoul(pid_str, NULL, 10);
