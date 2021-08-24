@@ -11,7 +11,7 @@
 #define INPUT_VAL_REPEAT 2
 
 struct binding {
-	int key;
+	int *keystroke;
 	char *cmd;
 };
 

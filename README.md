@@ -16,7 +16,7 @@ You must create the following two configuration files:
 ```
 Determine the keyboard name *\<NAME\>* with the command `sudo uinput -p -d /dev/input/by-id/<file>`. I keep this file in the directory `$XDG_CONFIG_HOME/udevmon`.
 
-See [interception-tools](https://gitlab.com/interception/linux/tools) for more information on this configuration file.
+See [interception tools](https://gitlab.com/interception/linux/tools) for more information on this configuration file.
 #### `$XDG_CONFIG_HOME/hkd/config`
 ```
 TBD
