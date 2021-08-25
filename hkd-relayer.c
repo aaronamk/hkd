@@ -4,16 +4,12 @@
 #include <signal.h>
 #include <linux/input.h>
 
+#include "config.h"
 
 /* https://www.kernel.org/doc/html/latest/input/event-codes.html */
 #define INPUT_VAL_PRESS 1
 #define INPUT_VAL_RELEASE 0
 #define INPUT_VAL_REPEAT 2
-
-struct binding {
-	int *keystroke;
-	char *cmd;
-};
 
 
 int read_event(struct input_event *event) {
@@ -48,13 +44,17 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
+		int bound;
 		switch (input.value) {
 			case INPUT_VAL_PRESS:
-				if (input.code == KEY_BACKSLASH) {
-					message.sival_int = 1;
-					sigqueue(pid, SIGUSR1, message);
+				bound = 0;
+				for (message.sival_int = 0; message.sival_int < LENGTH(bindings); message.sival_int++) {
+					if (bindings[message.sival_int].key == input.code) {
+						bound = 1;
+						sigqueue(pid, SIGUSR1, message);
+					}
 				}
-				else write_event(&input);
+				if (!bound) write_event(&input);
 				break;
 			case INPUT_VAL_RELEASE:
 				if (input.code == KEY_BACKSLASH) {}

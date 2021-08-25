@@ -13,7 +13,7 @@ sudo make install
 ```
 
 ## CONFIGURATION
-You must create the following two configuration files:
+You must use the following two configuration files:
 #### `config.yaml`
 ```yaml
 - JOB: "intercept -g $DEVNODE | hkd-relayer | uinput -d $DEVNODE"
@@ -23,10 +23,8 @@ You must create the following two configuration files:
 Determine the keyboard name `<NAME>` with the command `sudo uinput -p -d /dev/input/by-id/<file>`. I keep this file in the directory `$XDG_CONFIG_HOME/udevmon`.
 
 See [Interception Tools](https://gitlab.com/interception/linux/tools) for more information on this configuration file.
-#### `$XDG_CONFIG_HOME/hkd/config`
-```
-TBD
-```
+#### `config.h`
+This configuration file is where you place your key bindings. It works similarly to suckless software. `config.h` is part of the source, so you must recompile and re-run the code for any changes to take effect.
 
 ## USAGE
 ```

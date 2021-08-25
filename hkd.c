@@ -5,31 +5,25 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
-#include <sys/wait.h>
+
+#include "config.h"
 
 
 /* run a command from calling process */
-void run(char *cmd) {
-	char *full_cmd[] = {"sh", "-c", cmd, NULL};
+void run(char *cmd[]) {
 	if (fork() == 0) {
-		if (fork() == 0) {
-			setsid();
-			execvp(full_cmd[0], full_cmd);
-		}
+		setsid();
+		execvp(cmd[0], cmd);
 		exit(EXIT_SUCCESS);
 	}
-	wait(NULL);
 }
 
 
 /* catch signal and run associated command from signal number */
 void handle_sig(int signo, siginfo_t *info, void *extra) {
-	switch (info->si_value.sival_int) {
-		case 1:
-			run("$TERMINAL");
-			break;
-	}
+	run((char**)bindings[info->si_value.sival_int].cmd);
 }
+
 
 void
 print_usage(const char *program) {
