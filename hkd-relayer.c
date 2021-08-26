@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -34,6 +35,9 @@ int main(int argc, char *argv[]) {
 	union sigval message;
 	struct input_event input;
 	setbuf(stdin, NULL), setbuf(stdout, NULL);
+	unsigned int mod_state = 0;
+	bool bound;
+	bool is_mod;
 	while (read_event(&input)) {
 		/* make mouse and touchpad events consume pressed taps */
 		if (input.type == EV_MSC && input.code == MSC_SCAN) continue;
@@ -44,21 +48,74 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		int bound;
+		is_mod = false;
 		switch (input.value) {
 			case INPUT_VAL_PRESS:
-				bound = 0;
-				for (message.sival_int = 0; message.sival_int < LENGTH(bindings); message.sival_int++) {
-					if (bindings[message.sival_int].key == input.code) {
-						bound = 1;
-						sigqueue(pid, SIGUSR1, message);
+				bound = false;
+				switch (input.code) {
+					case KEY_LEFTSHIFT:
+					case KEY_RIGHTSHIFT:
+						is_mod = true;
+						mod_state ^= 0b11000000;
+						break;
+					case KEY_LEFTALT:
+					case KEY_RIGHTALT:
+						is_mod = true;
+						mod_state ^= 0b00110000;
+						break;
+					case KEY_LEFTMETA:
+					case KEY_RIGHTMETA:
+						is_mod = true;
+						mod_state ^= 0b00001100;
+						break;
+					case KEY_LEFTCTRL:
+					case KEY_RIGHTCTRL:
+						is_mod = true;
+						mod_state ^= 0b00000011;
+						break;
+				}
+				if (!is_mod) {
+					for (message.sival_int = 0; message.sival_int < LENGTH(bindings); message.sival_int++) {
+						if (bindings[message.sival_int].key == input.code && mod_state == bindings[message.sival_int].mods) {
+							bound = true;
+							sigqueue(pid, SIGUSR1, message);
+						}
 					}
 				}
 				if (!bound) write_event(&input);
 				break;
 			case INPUT_VAL_RELEASE:
-				if (input.code == KEY_BACKSLASH) {}
-				else write_event(&input);
+				switch (input.code) {
+					case KEY_LEFTSHIFT:
+					case KEY_RIGHTSHIFT:
+						is_mod = true;
+						mod_state ^= 0b11000000;
+						break;
+					case KEY_LEFTALT:
+					case KEY_RIGHTALT:
+						is_mod = true;
+						mod_state ^= 0b00110000;
+						break;
+					case KEY_LEFTMETA:
+					case KEY_RIGHTMETA:
+						is_mod = true;
+						mod_state ^= 0b00001100;
+						break;
+					case KEY_LEFTCTRL:
+					case KEY_RIGHTCTRL:
+						is_mod = true;
+						mod_state ^= 0b00000011;
+						break;
+				}
+				if (is_mod) {
+					for (message.sival_int = 0; message.sival_int < LENGTH(bindings); message.sival_int++) {
+						if (bindings[message.sival_int].key == input.code && mod_state == bindings[message.sival_int].mods) {
+							bound = true;
+							sigqueue(pid, SIGUSR1, message);
+						}
+					}
+				}
+				write_event(&input);
 				break;
 			case INPUT_VAL_REPEAT:
 				/* linux console, X, wayland handles repeat */

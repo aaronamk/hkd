@@ -1,5 +1,5 @@
 CC     = gcc
-CFLAGS = -std=c11 -Wall -D_POSIX_C_SOURCE=200809L
+CFLAGS = -std=c11 -Wall -D_POSIX_C_SOURCE=200809L -O3
 PREFIX = /usr/local
 
 all: hkd hkd-relayer
