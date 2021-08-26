@@ -10,7 +10,7 @@ struct binding {
 	const void *cmd;
 };
 
-/* any keys can be used as a modifier (e.g. caps lock), these are just the most common ones: */
+/* any key can be used as a modifier (e.g. caps lock), these are just the most common ones: */
 static const int mod_keys[] = { KEY_LEFTSHIFT, KEY_RIGHTSHIFT, KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTCTRL, KEY_RIGHTCTRL };
 
 /* masks */

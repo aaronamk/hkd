@@ -1,4 +1,4 @@
-*WARNING*: In construction and does not work yet
+*WARNING*: Early in development, your mileage may vary
 
 ## DESCRIPTION
 A plugin for [Interception Tools](https://gitlab.com/interception/linux/tools). It's [sxhkd](https://github.com/baskerville/sxhkd) without the reliance on an X server.
@@ -21,6 +21,7 @@ You must use the following two configuration files:
     NAME: "<NAME>"
 ```
 Determine the keyboard name `<NAME>` with the command `sudo uinput -p -d /dev/input/by-id/<file>`. I keep this file in the directory `$XDG_CONFIG_HOME/udevmon`.
+`sudo uinput -p -d /dev/input/by-path/<file>`
 
 See [Interception Tools](https://gitlab.com/interception/linux/tools) for more information on this configuration file.
 #### `config.h`

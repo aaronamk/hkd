@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -13,14 +12,67 @@
 #define INPUT_VAL_REPEAT 2
 
 
+/**
+ * Get an event from stdin
+ */
 int read_event(struct input_event *event) {
 	return fread(event, sizeof(struct input_event), 1, stdin) == 1;
 }
 
 
+/**
+ * Write an event to stdout
+ */
 void write_event(const struct input_event *event) {
 	if (fwrite(event, sizeof(struct input_event), 1, stdout) != 1)
 		exit(EXIT_FAILURE);
+}
+
+
+/**
+ * Update the mod state and test if modifier
+ *
+ * @return whether the value is a modifier
+ */
+int try_modifier(int key, unsigned int *mod_state) {
+	switch (key) {
+		case KEY_LEFTSHIFT:
+		case KEY_RIGHTSHIFT:
+			*mod_state ^= 0b11000000;
+			return 1;
+		case KEY_LEFTALT:
+		case KEY_RIGHTALT:
+			*mod_state ^= 0b00110000;
+			return 1;
+		case KEY_LEFTMETA:
+		case KEY_RIGHTMETA:
+			*mod_state ^= 0b00001100;
+			return 1;
+		case KEY_LEFTCTRL:
+		case KEY_RIGHTCTRL:
+			*mod_state ^= 0b00000011;
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+
+/**
+ * Attempt to run associated command
+ *
+ * @return whether the key combination is a hotkey
+ */
+int try_hotkey(unsigned int key, unsigned int mod_state, pid_t pid) {
+	union sigval msg;
+	for (msg.sival_int = 0; msg.sival_int < LENGTH(bindings); msg.sival_int++) {
+		if (bindings[msg.sival_int].key  == key
+		 && bindings[msg.sival_int].mods == mod_state) {
+			sigqueue(pid, SIGUSR1, msg);
+			return 1;
+		}
+	}
+	return 0;
 }
 
 
@@ -32,12 +84,10 @@ int main(int argc, char *argv[]) {
 	pid_t pid = strtoul(pid_str, NULL, 10);
 	fclose(cache);
 
-	union sigval message;
+	/* process events */
 	struct input_event input;
-	setbuf(stdin, NULL), setbuf(stdout, NULL);
 	unsigned int mod_state = 0;
-	bool bound;
-	bool is_mod;
+	setbuf(stdin, NULL), setbuf(stdout, NULL);
 	while (read_event(&input)) {
 		/* make mouse and touchpad events consume pressed taps */
 		if (input.type == EV_MSC && input.code == MSC_SCAN) continue;
@@ -48,72 +98,17 @@ int main(int argc, char *argv[]) {
 			continue;
 		}
 
-		is_mod = false;
+		/* process key */
 		switch (input.value) {
 			case INPUT_VAL_PRESS:
-				bound = false;
-				switch (input.code) {
-					case KEY_LEFTSHIFT:
-					case KEY_RIGHTSHIFT:
-						is_mod = true;
-						mod_state ^= 0b11000000;
-						break;
-					case KEY_LEFTALT:
-					case KEY_RIGHTALT:
-						is_mod = true;
-						mod_state ^= 0b00110000;
-						break;
-					case KEY_LEFTMETA:
-					case KEY_RIGHTMETA:
-						is_mod = true;
-						mod_state ^= 0b00001100;
-						break;
-					case KEY_LEFTCTRL:
-					case KEY_RIGHTCTRL:
-						is_mod = true;
-						mod_state ^= 0b00000011;
-						break;
+				if (try_modifier(input.code, &mod_state)
+				 || !try_hotkey(input.code, mod_state, pid)) {
+					write_event(&input);
 				}
-				if (!is_mod) {
-					for (message.sival_int = 0; message.sival_int < LENGTH(bindings); message.sival_int++) {
-						if (bindings[message.sival_int].key == input.code && mod_state == bindings[message.sival_int].mods) {
-							bound = true;
-							sigqueue(pid, SIGUSR1, message);
-						}
-					}
-				}
-				if (!bound) write_event(&input);
 				break;
 			case INPUT_VAL_RELEASE:
-				switch (input.code) {
-					case KEY_LEFTSHIFT:
-					case KEY_RIGHTSHIFT:
-						is_mod = true;
-						mod_state ^= 0b11000000;
-						break;
-					case KEY_LEFTALT:
-					case KEY_RIGHTALT:
-						is_mod = true;
-						mod_state ^= 0b00110000;
-						break;
-					case KEY_LEFTMETA:
-					case KEY_RIGHTMETA:
-						is_mod = true;
-						mod_state ^= 0b00001100;
-						break;
-					case KEY_LEFTCTRL:
-					case KEY_RIGHTCTRL:
-						is_mod = true;
-						mod_state ^= 0b00000011;
-						break;
-				}
-				if (is_mod) {
-					for (message.sival_int = 0; message.sival_int < LENGTH(bindings); message.sival_int++) {
-						if (bindings[message.sival_int].key == input.code && mod_state == bindings[message.sival_int].mods) {
-							bound = true;
-							sigqueue(pid, SIGUSR1, message);
-						}
-					}
+				if (try_modifier(input.code, &mod_state)) {
+					try_hotkey(input.code, mod_state, pid);
 				}
 				write_event(&input);
 				break;
@@ -127,4 +122,6 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+
+	return 0;
 }
