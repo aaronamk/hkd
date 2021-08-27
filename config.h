@@ -5,8 +5,8 @@
 #define LENGTH(X) sizeof X / sizeof X[0]
 
 struct binding {
-	const unsigned int mods : 8; /* this value can be changed to accommodate a different number of modifier keys */
-	const int key;
+	const unsigned int mods;
+	const unsigned int key;
 	const void *cmd;
 };
 
@@ -37,7 +37,6 @@ static const char *media_toggle_pause[] = { "playerctl", "--player=playerctld", 
 
 /* To use envoronment variables or run scripts, add "sh -c" */
 static const char *term[] = { "sh", "-c", "$TERMINAL", NULL };
-static const char *editor[] = { "sh", "-c", "$TERMINAL", "-e", "$EDITOR", NULL };
 /* static const char *shell_script[] = { "sh", "-c", "my_shell_script.sh", NULL }; */
 
 /* bindings */
@@ -54,5 +53,4 @@ static const struct binding bindings[] = {
 	{M_NONE,                KEY_PLAYPAUSE,      media_toggle_pause},
 	{M_NONE,                KEY_MUTE,           vol_toggle_mute},
 	{M_META,                KEY_ENTER,          term},
-	{M_META|M_SHIFT,        KEY_ENTER,          editor},
 };
