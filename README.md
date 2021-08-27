@@ -18,17 +18,18 @@ You must use the following two configuration files:
 ```yaml
 - JOB: "intercept -g $DEVNODE | hkd-relayer | uinput -d $DEVNODE"
   DEVICE:
-    NAME: "<NAME>"
+    EVENTS:
+      EV_KEY: [KEY_A] # matches all devices with an "A" key
 ```
-Determine the keyboard name `<NAME>` with the command `sudo uinput -p -d /dev/input/by-id/<file>`. I keep this file in the directory `$XDG_CONFIG_HOME/udevmon`.
-`sudo uinput -p -d /dev/input/by-path/<file>`
+I keep this file in the directory `$XDG_CONFIG_HOME/udevmon`.
 
-See [Interception Tools](https://gitlab.com/interception/linux/tools) for more information on this configuration file.
+See [Interception Tools](https://gitlab.com/interception/linux/tools) for more information on this configuration file and its capabilities.
 #### `config.h`
-This configuration file is where you place your key bindings. It works similarly to suckless software. `config.h` is part of the source, so you must recompile and re-run the code for any changes to take effect.
+This configuration file is where you set your key bindings. It works similarly to suckless software. `config.h` is part of the source, so you must recompile and re-run the program for any changes to take effect.
 
 ## USAGE
 ```
 hkd &
 sudo udevmon -c <path-to-file>/config.yaml
 ```
+Note: hkd must be run before udevmon

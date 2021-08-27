@@ -11,14 +11,14 @@ struct binding {
 };
 
 /* any key can be used as a modifier (e.g. caps lock), these are just the most common ones: */
-static const int mod_keys[] = { KEY_LEFTSHIFT, KEY_RIGHTSHIFT, KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTCTRL, KEY_RIGHTCTRL };
+static const int mods[] = { KEY_LEFTSHIFT, KEY_RIGHTSHIFT, KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTCTRL, KEY_RIGHTCTRL };
 
 /* masks */
-#define M_NONE  0b00000000
+#define M_NONE  0
 #define M_SHIFT 0b11000000
-#define M_ALT   0b00110000
-#define M_META  0b00001100
-#define M_CTRL  0b00000011
+#define M_ALT   0b110000
+#define M_META  0b1100
+#define M_CTRL  0b11
 
 /* commands */
 static const char *shutdown[] = { "shutdown", "now", NULL };

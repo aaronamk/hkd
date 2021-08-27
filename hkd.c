@@ -10,7 +10,7 @@
 
 
 /**
- * execute a command from calling process
+ * Execute a command in a seperate process
  */
 void spawn(char *cmd[]) {
 	if (fork() == 0) {
@@ -22,7 +22,8 @@ void spawn(char *cmd[]) {
 
 
 /**
- * catch signal and run associated command from signal number
+ * Execute associated command from bindings array based
+ * on the passed signal value
  */
 void handle_sig(int signo, siginfo_t *info, void *extra) {
 	spawn((char**)bindings[info->si_value.sival_int].cmd);
@@ -31,14 +32,14 @@ void handle_sig(int signo, siginfo_t *info, void *extra) {
 
 void print_usage(const char *program) {
 	fprintf(stdout,
-			"Hotkey daemon plugin for interception tools:\n"
-			"        https://gitlab.com/interception/linux/tools\n"
-			"\n"
-			"usage: %s [-h]\n"
-			"\n"
-			"options:\n"
-			"    -h                   show this message and exit\n",
-			program);
+	        "Hotkey daemon plugin for interception tools:\n"
+	        "        https://gitlab.com/interception/linux/tools\n"
+	        "\n"
+	        "usage: %s [-h]\n"
+	        "\n"
+	        "options:\n"
+	        "    -h                   show this message and exit\n",
+	        program);
 }
 
 

@@ -35,26 +35,16 @@ void write_event(const struct input_event *event) {
  * @return whether the value is a modifier
  */
 int try_modifier(int key, unsigned int *mod_state) {
-	switch (key) {
-		case KEY_LEFTSHIFT:
-		case KEY_RIGHTSHIFT:
-			*mod_state ^= 0b11000000;
+	int i = 0;
+	unsigned int bits;
+	for (bits = 0b11 << (LENGTH(mods) - 2); bits; bits >>= 2) {
+		if (mods[i] == key || mods[i + 1] == key) {
+			*mod_state ^= bits;
 			return 1;
-		case KEY_LEFTALT:
-		case KEY_RIGHTALT:
-			*mod_state ^= 0b00110000;
-			return 1;
-		case KEY_LEFTMETA:
-		case KEY_RIGHTMETA:
-			*mod_state ^= 0b00001100;
-			return 1;
-		case KEY_LEFTCTRL:
-		case KEY_RIGHTCTRL:
-			*mod_state ^= 0b00000011;
-			return 1;
-		default:
-			return 0;
+		}
+		i += 2;
 	}
+	return 0;
 }
 
 
