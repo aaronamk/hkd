@@ -34,7 +34,7 @@ void write_event(const struct input_event *event) {
  *
  * @return whether the value is a modifier
  */
-int try_modifier(int key, unsigned int *mod_state) {
+int try_modifier(unsigned int key, unsigned int *mod_state) {
 	int i = 0;
 	unsigned int bits;
 	for (bits = 0b11 << (LENGTH(mods) - 2); bits; bits >>= 2) {
@@ -54,10 +54,12 @@ int try_modifier(int key, unsigned int *mod_state) {
  * @return whether the key combination is a hotkey
  */
 int try_hotkey(unsigned int key, unsigned int mod_state, pid_t pid) {
-	union sigval msg;
-	for (msg.sival_int = 0; msg.sival_int < LENGTH(bindings); msg.sival_int++) {
-		if (bindings[msg.sival_int].key  == key
-		 && bindings[msg.sival_int].mods == mod_state) {
+	int i;
+	for (i = 0; i < LENGTH(bindings); i++) {
+		if (bindings[i].key  == key
+		 && bindings[i].mods == mod_state) {
+			union sigval msg;
+			msg.sival_int = i;
 			sigqueue(pid, SIGUSR1, msg);
 			return 1;
 		}

@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "h")) != -1) {
 		switch (opt) {
 			case 'h':
-				return print_usage( argv[0]), EXIT_SUCCESS;
+				return print_usage(argv[0]), EXIT_SUCCESS;
 		}
 	}
 
