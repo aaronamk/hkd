@@ -51,6 +51,5 @@ static const struct binding bindings[] = {
 	{M_SHIFT,               KEY_NEXTSONG,       media_forward},
 	{M_SHIFT,               KEY_PREVIOUSSONG,   media_backward},
 	{M_NONE,                KEY_PLAYPAUSE,      media_toggle_pause},
-	{M_NONE,                KEY_MUTE,           vol_toggle_mute},
-	{M_META,                KEY_ENTER,          term},
+	{M_META,                KEY_ENTER,          term}
 };
