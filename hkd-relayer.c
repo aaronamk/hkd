@@ -30,18 +30,13 @@ void write_event(const struct input_event *event) {
 
 
 /**
- * Update the mod state and test if modifier
- *
- * @return whether the value is a modifier
+ * @return the modifier mask of the given key
  */
-int try_modifier(unsigned int key, unsigned int *mod_state) {
+int get_mod_mask(unsigned int key) {
 	int i = 0;
 	unsigned int bits;
 	for (bits = 0b11 << (LENGTH(mods) - 2); bits; bits >>= 2) {
-		if (mods[i] == key || mods[i + 1] == key) {
-			*mod_state ^= bits;
-			return 1;
-		}
+		if (mods[i] == key || mods[i + 1] == key) return bits;
 		i += 2;
 	}
 	return 0;
@@ -53,14 +48,13 @@ int try_modifier(unsigned int key, unsigned int *mod_state) {
  *
  * @return whether the key combination is a hotkey
  */
-int try_hotkey(unsigned int key, unsigned int mod_state, pid_t pid) {
+int try_hotkey(unsigned int key, unsigned int mod_state, pid_t pid, union sigval *msg) {
 	int i;
 	for (i = 0; i < LENGTH(bindings); i++) {
 		if (bindings[i].key  == key
 		 && bindings[i].mods == mod_state) {
-			union sigval msg;
-			msg.sival_int = i;
-			sigqueue(pid, SIGUSR1, msg);
+			msg->sival_int = i;
+			sigqueue(pid, SIGUSR1, *msg);
 			return 1;
 		}
 	}
@@ -75,10 +69,16 @@ int main(int argc, char *argv[]) {
 	fgets(pid_str, 20, cache);
 	pid_t pid = strtoul(pid_str, NULL, 10);
 	fclose(cache);
+	if (pid == 0) {
+		fprintf(stderr, "Error: hkd not running");
+		exit(EXIT_FAILURE);
+	}
 
 	/* process events */
 	struct input_event input;
+	union sigval msg;
 	unsigned int mod_state = 0;
+	unsigned int mod_mask;
 	setbuf(stdin, NULL), setbuf(stdout, NULL);
 	while (read_event(&input)) {
 		/* make mouse and touchpad events consume pressed taps */
@@ -93,25 +93,24 @@ int main(int argc, char *argv[]) {
 		/* process key */
 		switch (input.value) {
 			case INPUT_VAL_PRESS:
-				if (try_modifier(input.code, &mod_state)
-				 || !try_hotkey(input.code, mod_state, pid)) {
+				if ((mod_mask = get_mod_mask(input.code))
+				 || !try_hotkey(input.code, mod_state, pid, &msg)) {
+					mod_state |= mod_mask;
 					write_event(&input);
 				}
-				break;
+				continue;
 			case INPUT_VAL_RELEASE:
-				if (try_modifier(input.code, &mod_state)) {
-					try_hotkey(input.code, mod_state, pid);
-				}
+				mod_state &= ~get_mod_mask(input.code);
 				write_event(&input);
-				break;
+				continue;
 			case INPUT_VAL_REPEAT:
 				/* linux console, X, wayland handles repeat */
-				break;
+				continue;
 			default:
 				fprintf(stderr, "unexpected .value=%d .code=%d, doing nothing",
 				        input.value,
 				        input.code);
-				break;
+				continue;
 		}
 	}
 
