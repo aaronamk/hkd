@@ -21,8 +21,6 @@ static const int mods[] = { KEY_LEFTSHIFT, KEY_RIGHTSHIFT, KEY_LEFTALT, KEY_RIGH
 #define M_CTRL  0b11
 
 /* commands */
-static const char *shutdown[] = { "shutdown", "now", NULL };
-
 /* requires pulseaudio */
 static const char *vol_up[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "+2%", NULL };
 static const char *vol_down[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "-2%", NULL };
@@ -35,21 +33,22 @@ static const char *media_forward[] = { "playerctl", "--player=playerctld", "posi
 static const char *media_backward[] = { "playerctl", "--player=playerctld", "position", "5-", NULL };
 static const char *media_toggle_pause[] = { "playerctl", "--player=playerctld", "play-pause", NULL };
 
-/* To use envoronment variables or run scripts, add "sh -c" */
 static const char *term[] = { "sh", "-c", "$TERMINAL", NULL };
-/* static const char *shell_script[] = { "sh", "-c", "my_shell_script.sh", NULL }; */
+static const char *shutdown[] = { "shutdown", "now", NULL };
 
 /* bindings */
 static const struct binding bindings[] = {
 	/* modifiers            key                 command */
-	{M_CTRL|M_ALT,          KEY_DELETE,         shutdown},
-	{M_NONE,                KEY_VOLUMEUP,       vol_up},
-	{M_NONE,                KEY_VOLUMEDOWN,     vol_down},
-	{M_NONE,                KEY_MUTE,           vol_toggle_mute},
-	{M_NONE,                KEY_NEXTSONG,       media_next},
-	{M_NONE,                KEY_PREVIOUSSONG,   media_prev},
-	{M_SHIFT,               KEY_NEXTSONG,       media_forward},
-	{M_SHIFT,               KEY_PREVIOUSSONG,   media_backward},
-	{M_NONE,                KEY_PLAYPAUSE,      media_toggle_pause},
-	{M_META,                KEY_ENTER,          term}
+	{ M_NONE,                KEY_VOLUMEUP,       vol_up },
+	{ M_NONE,                KEY_VOLUMEDOWN,     vol_down },
+	{ M_NONE,                KEY_MUTE,           vol_toggle_mute },
+
+	{ M_NONE,                KEY_NEXTSONG,       media_next },
+	{ M_NONE,                KEY_PREVIOUSSONG,   media_prev },
+	{ M_SHIFT,               KEY_NEXTSONG,       media_forward },
+	{ M_SHIFT,               KEY_PREVIOUSSONG,   media_backward },
+	{ M_NONE,                KEY_PLAYPAUSE,      media_toggle_pause },
+
+	{ M_META,                KEY_ENTER,          term },
+	{ M_CTRL|M_ALT,          KEY_DELETE,         shutdown }
 };
