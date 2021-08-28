@@ -1,6 +1,5 @@
 #include <linux/input-event-codes.h>
 #include <stdio.h>
-#include <linux/input.h>
 
 #define LENGTH(X) sizeof X / sizeof X[0]
 

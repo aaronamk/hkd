@@ -4,7 +4,7 @@
 A plugin for [Interception Tools](https://gitlab.com/interception/linux/tools). It's [sxhkd](https://github.com/baskerville/sxhkd) without the reliance on an X server.
 
 ## INSTALLATION
-Install [Interception Tools](https://gitlab.com/interception/linux/tools) first.
+Install Interception Tools first.
 #### From source
 ```shell
 git clone https://github.com/aaronamk/hkd.git

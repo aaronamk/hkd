@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 	/* wait for signal */
 	struct sigaction action;
-	sigset_t mask;
+	sigset_t mask = {0};
 	while (1) {
 		action.sa_flags = SA_SIGINFO;
 		action.sa_sigaction = &handle_sig;
