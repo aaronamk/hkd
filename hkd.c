@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "config.h"
 
@@ -14,10 +15,13 @@
  */
 void spawn(char *cmd[]) {
 	if (fork() == 0) {
-		setsid();
-		execvp(cmd[0], cmd);
+		if (fork() == 0) {
+			setsid();
+			execvp(cmd[0], cmd);
+		}
 		exit(EXIT_SUCCESS);
 	}
+	wait(NULL);
 }
 
 
