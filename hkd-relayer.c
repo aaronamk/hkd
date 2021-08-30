@@ -32,7 +32,7 @@ void write_event(const struct input_event *event) {
 /**
  * @return the modifier mask of the given key
  */
-int get_mod_mask(unsigned int key) {
+unsigned int get_mod_mask(unsigned int key) {
 	int i = 0;
 	unsigned int bits;
 	for (bits = 0b11 << (LENGTH(mods) - 2); bits; bits >>= 2) {
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
 				}
 				continue;
 			case INPUT_VAL_RELEASE:
-				mod_state &= ~get_mod_mask(input.code);
+				mod_state ^= get_mod_mask(input.code);
 				write_event(&input);
 				continue;
 			case INPUT_VAL_REPEAT:
