@@ -41,7 +41,7 @@ static const char *shutdown[] = { "shutdown", "now", NULL };
 
 /* bindings */
 static const struct binding bindings[] = {
-	/* modifiers            key                 command */
+	/* modifiers             key                 command */
 	{ M_NONE,                KEY_VOLUMEUP,       vol_up },
 	{ M_NONE,                KEY_VOLUMEDOWN,     vol_down },
 	{ M_NONE,                KEY_MUTE,           vol_toggle_mute },
