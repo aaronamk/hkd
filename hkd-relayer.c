@@ -32,12 +32,14 @@ void write_event(const struct input_event *event) {
 /**
  * @return the modifier mask of the given key
  */
-unsigned int get_mod_mask(unsigned int key) {
-	int i = 0;
+unsigned int get_mod_mask(key_code key) {
+	int i = 0, j;
 	unsigned int bits;
-	for (bits = 0b11 << (LENGTH(mods) - 2); bits; bits >>= 2) {
-		if (mods[i] == key || mods[i + 1] == key) return bits;
-		i += 2;
+	for (bits = 1 << (LENGTH(mods) - 1); bits; bits >>= 1) {
+		for (j = 0; j < LENGTH(mods[i]); j++) {
+			if (mods[i][j] == key) return bits;
+		}
+		i++;
 	}
 	return 0;
 }
@@ -48,11 +50,11 @@ unsigned int get_mod_mask(unsigned int key) {
  *
  * @return whether the key combination is a hotkey
  */
-int try_hotkey(unsigned int key, unsigned int mod_state, pid_t pid, union sigval *msg) {
+int try_hotkey(key_code key, unsigned int mod_state, pid_t pid, union sigval *msg) {
 	int i;
 	for (i = 0; i < LENGTH(bindings); i++) {
 		if (bindings[i].key  == key
-		 && bindings[i].mods == mod_state) {
+		 && bindings[i].mod_mask == mod_state) {
 			msg->sival_int = i;
 			sigqueue(pid, SIGUSR1, *msg);
 			return 1;

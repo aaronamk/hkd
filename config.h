@@ -2,22 +2,26 @@
 #include <stdio.h>
 
 #define LENGTH(X) sizeof X / sizeof X[0]
+typedef unsigned short key_code;
 
 struct binding {
-	const unsigned int mods;
-	const unsigned int key;
+	const unsigned int mod_mask;
+	const key_code key;
 	const void *cmd;
 };
 
 /* any key can be used as a modifier (e.g. caps lock), these are just the most common ones: */
-static const int mods[] = { KEY_LEFTSHIFT, KEY_RIGHTSHIFT, KEY_LEFTALT, KEY_RIGHTALT, KEY_LEFTMETA, KEY_RIGHTMETA, KEY_LEFTCTRL, KEY_RIGHTCTRL };
+static const key_code mods[][2] = { { KEY_LEFTSHIFT, KEY_RIGHTSHIFT },
+                                    { KEY_LEFTALT,   KEY_RIGHTALT },
+                                    { KEY_LEFTMETA,  KEY_RIGHTMETA },
+                                    { KEY_LEFTCTRL,  KEY_RIGHTCTRL } };
 
 /* masks */
 #define M_NONE  0
-#define M_SHIFT 0b11000000
-#define M_ALT   0b110000
-#define M_META  0b1100
-#define M_CTRL  0b11
+#define M_SHIFT 0b1000
+#define M_ALT   0b0100
+#define M_META  0b0010
+#define M_CTRL  0b0001
 
 /* commands */
 /* requires pulseaudio */
