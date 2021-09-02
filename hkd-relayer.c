@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
 	/* process events */
 	struct input_event input;
 	union sigval msg;
+	key_code last_press = 0;
 	unsigned int mod_state = 0;
 	unsigned int mod_mask;
 	setbuf(stdin, NULL), setbuf(stdout, NULL);
@@ -95,6 +96,7 @@ int main(int argc, char *argv[]) {
 		/* process key */
 		switch (input.value) {
 			case INPUT_VAL_PRESS:
+				last_press = input.code;
 				if ((mod_mask = get_mod_mask(input.code))
 				 || !try_hotkey(input.code, mod_state, pid, &msg)) {
 					mod_state |= mod_mask;
@@ -102,7 +104,10 @@ int main(int argc, char *argv[]) {
 				}
 				continue;
 			case INPUT_VAL_RELEASE:
-				mod_state ^= get_mod_mask(input.code);
+				if ((mod_mask = get_mod_mask(input.code))) {
+					mod_state ^= mod_mask;
+					if (last_press == input.code) try_hotkey(input.code, mod_state, pid, &msg);
+				}
 				write_event(&input);
 				continue;
 			case INPUT_VAL_REPEAT:

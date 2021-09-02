@@ -37,21 +37,23 @@ static const char *media_backward[] = { "playerctl", "--player=playerctld", "pos
 static const char *media_toggle_pause[] = { "playerctl", "--player=playerctld", "play-pause", NULL };
 
 static const char *term[] = { "sh", "-c", "$TERMINAL", NULL };
+static const char *launcher[] = { "dmenu_run", NULL };
 static const char *shutdown[] = { "shutdown", "now", NULL };
 
 /* bindings */
 static const struct binding bindings[] = {
-	/* modifiers             key                 command */
-	{ M_NONE,                KEY_VOLUMEUP,       vol_up },
-	{ M_NONE,                KEY_VOLUMEDOWN,     vol_down },
-	{ M_NONE,                KEY_MUTE,           vol_toggle_mute },
+	/* modifier mask         key code             command */
+	{ M_NONE,                KEY_VOLUMEUP,        vol_up },
+	{ M_NONE,                KEY_VOLUMEDOWN,      vol_down },
+	{ M_NONE,                KEY_MUTE,            vol_toggle_mute },
 
-	{ M_NONE,                KEY_NEXTSONG,       media_next },
-	{ M_NONE,                KEY_PREVIOUSSONG,   media_prev },
-	{ M_SHIFT,               KEY_NEXTSONG,       media_forward },
-	{ M_SHIFT,               KEY_PREVIOUSSONG,   media_backward },
-	{ M_NONE,                KEY_PLAYPAUSE,      media_toggle_pause },
+	{ M_NONE,                KEY_NEXTSONG,        media_next },
+	{ M_NONE,                KEY_PREVIOUSSONG,    media_prev },
+	{ M_SHIFT,               KEY_NEXTSONG,        media_forward },
+	{ M_SHIFT,               KEY_PREVIOUSSONG,    media_backward },
+	{ M_NONE,                KEY_PLAYPAUSE,       media_toggle_pause },
 
-	{ M_META,                KEY_ENTER,          term },
-	{ M_CTRL|M_ALT,          KEY_DELETE,         shutdown }
+	{ M_META,                KEY_ENTER,           term },
+	{ M_NONE,                KEY_LEFTMETA,        launcher },
+	{ M_CTRL|M_ALT,          KEY_DELETE,          shutdown }
 };
