@@ -36,8 +36,12 @@ static const char *media_forward[] = { "playerctl", "--player=playerctld", "posi
 static const char *media_backward[] = { "playerctl", "--player=playerctld", "position", "5-", NULL };
 static const char *media_toggle_pause[] = { "playerctl", "--player=playerctld", "play-pause", NULL };
 
+/* requires a $TERMINAL environment variable set to your preferred terminal */
 static const char *term[] = { "sh", "-c", "$TERMINAL", NULL };
+
+/* requires dmenu */
 static const char *launcher[] = { "dmenu_run", NULL };
+
 static const char *shutdown[] = { "shutdown", "now", NULL };
 
 /* bindings */
