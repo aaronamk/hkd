@@ -55,5 +55,6 @@ static const struct binding bindings[] = {
 
 	{ M_META,                KEY_ENTER,           term },
 	{ M_NONE,                KEY_LEFTMETA,        launcher },
+	{ M_NONE,                KEY_RIGHTMETA,       launcher },
 	{ M_CTRL|M_ALT,          KEY_DELETE,          shutdown }
 };

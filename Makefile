@@ -18,7 +18,7 @@ install: all
 	chmod 755 ${DESTDIR}${PREFIX}/bin/hkd-relayer
 
 uninstall:
-	$(RM) ${DESTDIR}${PREFIX}/hkd ${DESTDIR}${PREFIX}/hkd-relayer
+	$(RM) ${DESTDIR}${PREFIX}/bin/hkd ${DESTDIR}${PREFIX}/bin/hkd-relayer
 
 clean:
 	$(RM) hkd hkd-relayer
