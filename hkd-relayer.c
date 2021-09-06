@@ -67,6 +67,11 @@ int try_hotkey(key_code key, unsigned int mod_state, pid_t pid, union sigval *ms
 int main(int argc, char *argv[]) {
 	/* find hkd pid */
 	FILE *cache = popen("pidof hkd", "r");
+	if (cache == NULL) {
+		fprintf(stderr, "Error: failed to read hkd pid");
+		exit(EXIT_FAILURE);
+	}
+
 	char pid_str[20];
 	fgets(pid_str, 20, cache);
 	pid_t pid = strtoul(pid_str, NULL, 10);
