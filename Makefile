@@ -1,4 +1,5 @@
 CC     = gcc
+INCS   = -I/usr/include/libevdev-1.0
 CFLAGS = -std=c11 -Wall -D_POSIX_C_SOURCE=200809L -O3
 PREFIX = /usr/local
 
@@ -8,7 +9,7 @@ hkd:
 	$(CC) $(CFLAGS) -o hkd hkd.c
 
 hkd-relayer:
-	$(CC) $(CFLAGS) -o hkd-relayer hkd-relayer.c
+	$(CC) $(CFLAGS) -o hkd-relayer hkd-relayer.c ${INCS}
 
 install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <linux/input.h>
+#include <libevdev/libevdev.h>
 
 #include "config.h"
 
