@@ -12,6 +12,10 @@
 #define INPUT_VAL_RELEASE 0
 #define INPUT_VAL_REPEAT 2
 
+static unsigned int mod_state = 0;
+static key_code last_press = 0;
+static pid_t pid;
+
 
 /**
  * Get an event from stdin
@@ -51,17 +55,59 @@ unsigned int get_mod_mask(key_code key) {
  *
  * @return whether the key combination is a hotkey
  */
-int try_hotkey(key_code key, unsigned int mod_state, pid_t pid, union sigval *msg) {
+int try_hotkey(key_code key) {
 	int i;
+	union sigval msg;
 	for (i = 0; i < LENGTH(bindings); i++) {
 		if (bindings[i].key  == key
 		 && bindings[i].mod_mask == mod_state) {
-			msg->sival_int = i;
-			sigqueue(pid, SIGUSR1, *msg);
+			msg.sival_int = i;
+			sigqueue(pid, SIGUSR1, msg);
 			return 1;
 		}
 	}
 	return 0;
+}
+
+
+void handle_event(struct input_event input) {
+	/* make mouse and touchpad events consume pressed taps */
+	if (input.type == EV_MSC && input.code == MSC_SCAN) return;
+
+	/* forward anything that is not a key event, including SYNs */
+	if (input.type != EV_KEY) {
+		write_event(&input);
+		return;
+	}
+
+	/* handle keys */
+	unsigned int mod_mask;
+	switch (input.value) {
+		case INPUT_VAL_PRESS:
+			last_press = input.code;
+			if ((mod_mask = get_mod_mask(input.code))
+			 || !try_hotkey(input.code)) {
+				mod_state |= mod_mask;
+				write_event(&input);
+			}
+			return;
+		case INPUT_VAL_RELEASE:
+			if ((mod_mask = get_mod_mask(input.code))) {
+				mod_state ^= mod_mask;
+				if (last_press == input.code) try_hotkey(input.code);
+			}
+			write_event(&input);
+			return;
+		case INPUT_VAL_REPEAT:
+			/* linux console, X, wayland handles repeat */
+			return;
+		default:
+			fprintf(stderr, "unexpected .value=%d .code=%d, doing nothing",
+			        input.value,
+			        input.code);
+			return;
+	}
+	return;
 }
 
 
@@ -75,7 +121,7 @@ int main(int argc, char *argv[]) {
 
 	char pid_str[20];
 	fgets(pid_str, 20, cache);
-	pid_t pid = strtoul(pid_str, NULL, 10);
+	pid = strtoul(pid_str, NULL, 10);
 	fclose(cache);
 	if (pid == 0) {
 		fprintf(stderr, "Error: hkd not running");
@@ -84,48 +130,8 @@ int main(int argc, char *argv[]) {
 
 	/* process events */
 	struct input_event input;
-	union sigval msg;
-	key_code last_press = 0;
-	unsigned int mod_state = 0;
-	unsigned int mod_mask;
 	setbuf(stdin, NULL), setbuf(stdout, NULL);
-	while (read_event(&input)) {
-		/* make mouse and touchpad events consume pressed taps */
-		if (input.type == EV_MSC && input.code == MSC_SCAN) continue;
-
-		/* forward anything that is not a key event, including SYNs */
-		if (input.type != EV_KEY) {
-			write_event(&input);
-			continue;
-		}
-
-		/* process key */
-		switch (input.value) {
-			case INPUT_VAL_PRESS:
-				last_press = input.code;
-				if ((mod_mask = get_mod_mask(input.code))
-				 || !try_hotkey(input.code, mod_state, pid, &msg)) {
-					mod_state |= mod_mask;
-					write_event(&input);
-				}
-				continue;
-			case INPUT_VAL_RELEASE:
-				if ((mod_mask = get_mod_mask(input.code))) {
-					mod_state ^= mod_mask;
-					if (last_press == input.code) try_hotkey(input.code, mod_state, pid, &msg);
-				}
-				write_event(&input);
-				continue;
-			case INPUT_VAL_REPEAT:
-				/* linux console, X, wayland handles repeat */
-				continue;
-			default:
-				fprintf(stderr, "unexpected .value=%d .code=%d, doing nothing",
-				        input.value,
-				        input.code);
-				continue;
-		}
-	}
+	while (read_event(&input)) handle_event(input);
 
 	return 0;
 }
