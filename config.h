@@ -1,13 +1,19 @@
 #include <linux/input-event-codes.h>
 #include <stdio.h>
 
-#define LENGTH(X) sizeof X / sizeof X[0]
 typedef unsigned short key_code;
 
 struct binding {
 	const unsigned int mod_mask;
 	const key_code key;
 	const void *cmd;
+};
+
+/* list of devices to respond to */
+static const char *devices[] = {
+	"/dev/input/by-id/kb1",
+	"/dev/input/by-id/kb2",
+	NULL
 };
 
 /* any key can be used as a modifier (e.g. caps lock), these are just the most common ones: */

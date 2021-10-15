@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <pthread.h>
 #include <linux/input.h>
 #include <libevdev/libevdev.h>
 #include <fcntl.h>
@@ -10,7 +11,7 @@
 
 #include "config.h"
 
-/* https://www.kernel.org/doc/html/latest/input/event-codes.html */
+#define LENGTH(X) sizeof X / sizeof X[0]
 #define INPUT_VAL_PRESS 1
 #define INPUT_VAL_RELEASE 0
 #define INPUT_VAL_REPEAT 2
@@ -22,12 +23,12 @@ static _Atomic(pid_t) pid;
 
 void print_usage(const char *program) {
 	fprintf(stdout,
-	        "Signals hkd based on key events"
 	        "\n"
 	        "usage: %s [options]\n"
 	        "\n"
+	        "Signal hkd based on key events"
+	        "\n"
 	        "options:\n"
-	        " -d <path> specify device to intercept\n"
 	        " -h        show this message and exit\n",
 	        program);
 }
@@ -117,12 +118,12 @@ void handle_event(struct input_event input) {
 }
 
 
-void *handle_device(char *path) {
+void *handle_device(void *path) {
 	/* open device */
 	struct libevdev *dev = NULL;
-	int fd = open(path, O_RDONLY|O_NONBLOCK);
+	int fd = open((char*)path, O_RDONLY|O_NONBLOCK);
 	if (fd < 0) {
-		fprintf(stderr, "Error: failed to open device: %s\n", path);
+		fprintf(stderr, "Error: failed to open device: %s\n", (char*)path);
 		exit(EXIT_FAILURE);
 	}
 	int rc = libevdev_new_from_fd(fd, &dev);
@@ -143,16 +144,24 @@ void *handle_device(char *path) {
 
 
 int main(int argc, char *argv[]) {
-	/* make sure program is running as root */
+	/* ensure program is running as root */
 	if (geteuid()) {
-		fprintf(stderr, "Error: %s must be run as root user\n", argv[0]);
+		fprintf(stderr, "%s: must be run as root user\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	/* find hkd pid */
 	FILE *cache = popen("pidof hkd", "r");
 	if (cache == NULL) {
-		fprintf(stderr, "Error: failed to read hkd pid\n");
+		fprintf(stderr, "%s: failed to read hkd pid\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+	char pid_str[20];
+	fgets(pid_str, 20, cache);
+	pid = strtoul(pid_str, NULL, 10);
+	fclose(cache);
+	if (pid == 0) {
+		fprintf(stderr, "%s: hkd not running\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -161,20 +170,29 @@ int main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "h")) != -1) {
 		switch (opt) {
 			case 'h':
-				return print_usage(argv[0]), EXIT_SUCCESS;
+				print_usage(argv[0]);
+				exit(EXIT_SUCCESS);
+			case '?':
+				fprintf(stderr, "%s: invalid option: %c\n", argv[0], opt);
+				print_usage(argv[0]);
+				exit(EXIT_FAILURE);
 		}
 	}
 
-	char pid_str[20];
-	fgets(pid_str, 20, cache);
-	pid = strtoul(pid_str, NULL, 10);
-	fclose(cache);
-	if (pid == 0) {
-		fprintf(stderr, "Error: hkd not running\n");
-		exit(EXIT_FAILURE);
+	/* create thread for each device*/
+	int count = 0;
+	const char *device;
+	while ((device = devices[count]) != NULL) count++;
+	pthread_t relayers[count];
+
+	int i = 0;
+	while ((device = devices[i]) != NULL) {
+		pthread_create(&relayers[i], NULL, handle_device, (void*)devices[i]);
+		i++;
 	}
 
-	handle_device("/dev/input/by-id/usb-SEMITEK_USB-HID_Gaming_Keyboard_SN0000000001-event-kbd");
+	void *status;
+	for (i = 0; i < count; i++) pthread_join(relayers[i], &status);
 
-	return 0;
+	return EXIT_SUCCESS;
 }

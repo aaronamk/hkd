@@ -51,7 +51,12 @@ int main(int argc, char *argv[]) {
 	while ((opt = getopt(argc, argv, "h")) != -1) {
 		switch (opt) {
 			case 'h':
-				return print_usage(argv[0]), EXIT_SUCCESS;
+				print_usage(argv[0]);
+				exit(EXIT_SUCCESS);
+			case '?':
+				fprintf(stderr, "%s: invalid option: %c\n", argv[0], opt);
+				print_usage(argv[0]);
+				exit(EXIT_FAILURE);
 		}
 	}
 
@@ -64,4 +69,6 @@ int main(int argc, char *argv[]) {
 		sigaction(SIGUSR1, &action, NULL);
 		sigsuspend(&mask);
 	}
+
+	return EXIT_SUCCESS;
 }
