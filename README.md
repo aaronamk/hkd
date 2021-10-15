@@ -18,6 +18,6 @@ See [https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-even
 ## USAGE
 ```
 hkd &
-sudo hkd-relayer
+sudo hkd-relay /dev/input/<path-to-device>
 ```
-Note: hkd must be run before hkd-relayer
+Note: hkd must be run before hkd-relay

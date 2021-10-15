@@ -10,6 +10,18 @@
 #include "config.h"
 
 
+void print_usage(const char *program) {
+	fprintf(stdout,
+	        "runs commands based on signal integers\n"
+	        "\n"
+	        "usage: %s [options]\n"
+	        "\n"
+	        "options:\n"
+	        " -h  show this message and exit\n",
+	        program);
+}
+
+
 /**
  * Execute a command in a seperate process
  */
@@ -31,19 +43,6 @@ void spawn(char *cmd[]) {
  */
 void handle_sig(int signo, siginfo_t *info, void *extra) {
 	spawn((char**)bindings[info->si_value.sival_int].cmd);
-}
-
-
-void print_usage(const char *program) {
-	fprintf(stdout,
-	        "Hotkey daemon plugin for interception tools:\n"
-	        "        https://gitlab.com/interception/linux/tools\n"
-	        "\n"
-	        "usage: %s [-h]\n"
-	        "\n"
-	        "options:\n"
-	        "    -h                   show this message and exit\n",
-	        program);
 }
 
 

@@ -1,9 +1,12 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <linux/input.h>
 #include <libevdev/libevdev.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "config.h"
 
@@ -12,16 +15,21 @@
 #define INPUT_VAL_RELEASE 0
 #define INPUT_VAL_REPEAT 2
 
-static unsigned int mod_state = 0;
-static key_code last_press = 0;
-static pid_t pid;
+static _Atomic(unsigned int) mod_state = 0;
+static _Atomic(key_code) last_press = 0;
+static _Atomic(pid_t) pid;
 
 
-/**
- * Get an event from stdin
- */
-int read_event(struct input_event *event) {
-	return fread(event, sizeof(struct input_event), 1, stdin) == 1;
+void print_usage(const char *program) {
+	fprintf(stdout,
+	        "Signals hkd based on key events"
+	        "\n"
+	        "usage: %s [options]\n"
+	        "\n"
+	        "options:\n"
+	        " -d <path> specify device to intercept\n"
+	        " -h        show this message and exit\n",
+	        program);
 }
 
 
@@ -29,8 +37,7 @@ int read_event(struct input_event *event) {
  * Write an event to stdout
  */
 void write_event(const struct input_event *event) {
-	if (fwrite(event, sizeof(struct input_event), 1, stdout) != 1)
-		exit(EXIT_FAILURE);
+	printf("%d\n", event->code);
 }
 
 
@@ -59,7 +66,7 @@ int try_hotkey(key_code key) {
 	int i;
 	union sigval msg;
 	for (i = 0; i < LENGTH(bindings); i++) {
-		if (bindings[i].key  == key
+		if (bindings[i].key == key
 		 && bindings[i].mod_mask == mod_state) {
 			msg.sival_int = i;
 			sigqueue(pid, SIGUSR1, msg);
@@ -71,12 +78,11 @@ int try_hotkey(key_code key) {
 
 
 void handle_event(struct input_event input) {
-	/* make mouse and touchpad events consume pressed taps */
 	if (input.type == EV_MSC && input.code == MSC_SCAN) return;
 
 	/* forward anything that is not a key event, including SYNs */
 	if (input.type != EV_KEY) {
-		write_event(&input);
+		/* write_event(&input); */
 		return;
 	}
 
@@ -88,7 +94,7 @@ void handle_event(struct input_event input) {
 			if ((mod_mask = get_mod_mask(input.code))
 			 || !try_hotkey(input.code)) {
 				mod_state |= mod_mask;
-				write_event(&input);
+				/* write_event(&input); */
 			}
 			return;
 		case INPUT_VAL_RELEASE:
@@ -96,7 +102,7 @@ void handle_event(struct input_event input) {
 				mod_state ^= mod_mask;
 				if (last_press == input.code) try_hotkey(input.code);
 			}
-			write_event(&input);
+			/* write_event(&input); */
 			return;
 		case INPUT_VAL_REPEAT:
 			/* linux console, X, wayland handles repeat */
@@ -111,12 +117,52 @@ void handle_event(struct input_event input) {
 }
 
 
+void *handle_device(char *path) {
+	/* open device */
+	struct libevdev *dev = NULL;
+	int fd = open(path, O_RDONLY|O_NONBLOCK);
+	if (fd < 0) {
+		fprintf(stderr, "Error: failed to open device: %s\n", path);
+		exit(EXIT_FAILURE);
+	}
+	int rc = libevdev_new_from_fd(fd, &dev);
+	if (rc < 0) {
+		fprintf(stderr, "Error: failed to init libevdev (%s)\n", strerror(-rc));
+		exit(EXIT_FAILURE);
+	}
+
+	/* process events */
+	do {
+		struct input_event input;
+		rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &input);
+		if (rc == 0) handle_event(input);
+	} while (rc == 1 || rc == 0 || rc == -EAGAIN);
+
+	return NULL;
+}
+
+
 int main(int argc, char *argv[]) {
+	/* make sure program is running as root */
+	if (geteuid()) {
+		fprintf(stderr, "Error: %s must be run as root user\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
 	/* find hkd pid */
 	FILE *cache = popen("pidof hkd", "r");
 	if (cache == NULL) {
-		fprintf(stderr, "Error: failed to read hkd pid");
+		fprintf(stderr, "Error: failed to read hkd pid\n");
 		exit(EXIT_FAILURE);
+	}
+
+	/* parse options */
+	int opt;
+	while ((opt = getopt(argc, argv, "h")) != -1) {
+		switch (opt) {
+			case 'h':
+				return print_usage(argv[0]), EXIT_SUCCESS;
+		}
 	}
 
 	char pid_str[20];
@@ -124,14 +170,11 @@ int main(int argc, char *argv[]) {
 	pid = strtoul(pid_str, NULL, 10);
 	fclose(cache);
 	if (pid == 0) {
-		fprintf(stderr, "Error: hkd not running");
+		fprintf(stderr, "Error: hkd not running\n");
 		exit(EXIT_FAILURE);
 	}
 
-	/* process events */
-	struct input_event input;
-	setbuf(stdin, NULL), setbuf(stdout, NULL);
-	while (read_event(&input)) handle_event(input);
+	handle_device("/dev/input/by-id/usb-SEMITEK_USB-HID_Gaming_Keyboard_SN0000000001-event-kbd");
 
 	return 0;
 }
