@@ -28,15 +28,6 @@ int receive_event(struct input_event *event) {
 }
 
 
-/**
- * Send keyboard event to stdout
- */
-void send_event(const struct input_event *event) {
-	if (fwrite(event, sizeof(struct input_event), 1, stdout) != 1)
-		exit(EXIT_FAILURE);
-}
-
-
 int main(int argc, char *argv[]) {
 	if (find_hkd() == 0) {
 		fprintf(stderr, "%s: could not find hkd process\n", argv[0]);
@@ -60,7 +51,14 @@ int main(int argc, char *argv[]) {
 	/* relay events to the event handler */
 	struct input_event input;
 	setbuf(stdin, NULL), setbuf(stdout, NULL);
-	while (receive_event(&input)) handle_event(input);
+	while (receive_event(&input)) {
+		/* done if event was handled */
+		if (handle_event(input)) continue;
+
+		/* send event */
+		if (fwrite(&input, sizeof(struct input_event), 1, stdout) != 1)
+			exit(EXIT_FAILURE);
+	}
 
 	return EXIT_SUCCESS;
 }

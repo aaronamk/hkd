@@ -69,49 +69,37 @@ unsigned int get_mod_mask(key_code key) {
 
 
 /**
- * Must be defined by the source file
- */
-void send_event(const struct input_event *event);
-
-
-/**
  * React to a key event
+ *
+ * @return whether the event was a hotkey (and should be ignored)
  */
-void handle_event(struct input_event input) {
-	if (input.type == EV_MSC && input.code == MSC_SCAN) return;
+int handle_event(struct input_event input) {
+	if (input.type == EV_MSC && input.code == MSC_SCAN) return 0;
 
 	/* forward anything that is not a key event, including SYNs */
-	if (input.type != EV_KEY) {
-		send_event(&input);
-		return;
-	}
+	if (input.type != EV_KEY) return 0;
 
 	/* handle keys */
 	unsigned int mod_mask;
 	switch (input.value) {
 		case INPUT_VAL_PRESS:
+		case INPUT_VAL_REPEAT:
 			last_press = input.code;
 			if ((mod_mask = get_mod_mask(input.code))
 			 || !try_hotkey(input.code)) {
 				mod_state |= mod_mask;
-				send_event(&input);
+				return 0;
 			}
-			return;
+			return 1;
 		case INPUT_VAL_RELEASE:
 			if ((mod_mask = get_mod_mask(input.code))) {
 				mod_state ^= mod_mask;
 				if (last_press == input.code) try_hotkey(input.code);
 			}
-			send_event(&input);
-			return;
-		case INPUT_VAL_REPEAT:
-			/* linux console, X, wayland handles repeat */
-			return;
+			return 0;
 		default:
 			fprintf(stderr, "unexpected .value=%d .code=%d, doing nothing",
-			        input.value,
-			        input.code);
-			return;
+					input.value, input.code);
+			return 0;
 	}
-	return;
 }
