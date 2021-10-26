@@ -62,16 +62,11 @@ void *handle_device(void *path) {
 	}
 
 	/* relay events to the event handler */
-	struct input_event input;
-	while (1) {
-		int rc = libevdev_next_event(dev,
-				LIBEVDEV_READ_FLAG_NORMAL | LIBEVDEV_READ_FLAG_BLOCKING, &input);
-
-		while (rc == LIBEVDEV_READ_STATUS_SYNC)
-			rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_SYNC, &input);
-
-		if (rc == -EAGAIN) continue;
-		if (rc != LIBEVDEV_READ_STATUS_SUCCESS) break;
+	struct input_event input = {};
+	do {
+		rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
+		                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);
+		if (rc != 0) continue;
 
 		/* continue if event was handled */
 		if (handle_event(input)) continue;
@@ -81,7 +76,8 @@ void *handle_device(void *path) {
 			                            input.value) < 0) {
 			fprintf(stderr, "Error: failed to send event\n");
 		}
-	}
+	} while (rc == 1 || rc == 0 || rc == -EAGAIN);
+
 
 	/* cleanup */
 	libevdev_grab(dev, LIBEVDEV_UNGRAB);
