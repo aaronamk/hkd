@@ -26,7 +26,7 @@ See [linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/in
 Run:
 ```shell
 hkd &
-sudo hkd-relay
+sudo hkd-relay -d /dev/input/by-id/<device1>,/dev/input/by-id/<device2>,...
 ```
 
 ### As an Interception Tools plugin

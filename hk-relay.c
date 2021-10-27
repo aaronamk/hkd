@@ -20,7 +20,9 @@ void print_usage(const char *program) {
 	        "Signal hkd based on info from libevdev device key events"
 	        "\n"
 	        "options:\n"
-	        " -h        show this message and exit\n",
+	        " -h               show this message and exit\n"
+	        " -d <devices>     comma-delimited list of device paths"
+	        "                  (/dev/input/<device>) to be monitored\n",
 	        program);
 }
 
@@ -102,11 +104,19 @@ int main(int argc, char *argv[]) {
 
 	/* parse options */
 	int opt;
-	while ((opt = getopt(argc, argv, "h")) != -1) {
+	char *devs = NULL;
+	while ((opt = getopt(argc, argv, ":hd:")) != -1) {
 		switch (opt) {
 			case 'h':
 				print_usage(argv[0]);
 				exit(EXIT_SUCCESS);
+			case 'd':
+				devs = strdup(optarg);
+				continue;
+			case ':':
+				fprintf(stderr, "%s: missing argument for option: %c\n", argv[0], opt);
+				print_usage(argv[0]);
+				exit(EXIT_FAILURE);
 			case '?':
 				fprintf(stderr, "%s: invalid option: %c\n", argv[0], opt);
 				print_usage(argv[0]);
@@ -114,22 +124,31 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	/* create thread for each device */
-	int count;
-	for (count = 0; devices[count] != NULL; count++);
-	pthread_t threads[count];
+	if (devs == NULL) {
+		fprintf(stderr, "%s: device not specified\n", argv[0]);
+		print_usage(argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
-	int i = 0;
-	for (i = 0; devices[i] != NULL; i++) {
+	/* count devices */
+	int dev_count = 1;
+	int i;
+	for (i = 0; devs[i]; i++) if (devs[i] == ',') dev_count++;
+
+	/* create thread for each device */
+	pthread_t threads[dev_count];
+	char *dev_path = strtok(devs, ",");
+	for (i = 0; i < dev_count; i++) {
 		if (pthread_create(&threads[i], NULL, handle_device,
-		                   (void*)devices[i])) {
+		                   (void*)dev_path)) {
 			fprintf(stderr, "Error: failed to create thread.");
 			exit(EXIT_FAILURE);
 		}
+		dev_path = strtok(NULL, ",");
 	}
 
 	void *status;
-	for (i = 0; i < count; i++) {
+	for (i = 0; i < dev_count; i++) {
 		if (pthread_join(threads[i], &status)) {
 			fprintf(stderr, "Error: failed to join thread.");
 			exit(EXIT_FAILURE);
