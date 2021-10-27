@@ -17,9 +17,9 @@ cd hkd
 sudo make install
 ```
 ## CONFIGURATION
-The file `config.h` is where you set your key bindings. It works similarly to suckless software. `config.h` is part of the source, so you must recompile and restart the program for any changes to take effect. Some default bindings are provided, you can add or remove them as needed.
+The file `config.h` is where you set your key bindings. This is similar to [suckless](https://suckless.org/philosophy) software. `config.h` is part of the source, so you must recompile and restart the program for any changes to take effect. Some default bindings are provided; you can add or remove them as needed.
 
-See [linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) for a list of available key codes.
+See [linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h) for a list of available key codes or use the [evtest](https://gitlab.freedesktop.org/libevdev/evtest) command to see device events printed to the terminal.
 
 ## USAGE
 ### Standalone
