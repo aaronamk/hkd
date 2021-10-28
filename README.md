@@ -11,7 +11,7 @@ Features:
 ## INSTALLATION
 ### From source
 Run:
-```shell
+```
 git clone https://github.com/aaronamk/hkd.git
 cd hkd
 sudo make install
@@ -24,9 +24,9 @@ See [linux/input-event-codes.h](https://github.com/torvalds/linux/blob/master/in
 ## USAGE
 ### Standalone
 Run:
-```shell
+```
 hkd &
-sudo hkd-relay -d /dev/input/by-id/<device1>,/dev/input/by-id/<device2>,...
+sudo hk-relay -d /dev/input/by-id/<device1>,/dev/input/by-id/<device2>,...
 ```
 
 ### As an Interception Tools plugin
@@ -43,7 +43,7 @@ sudo hkd-relay -d /dev/input/by-id/<device1>,/dev/input/by-id/<device2>,...
 
 
 3. Run:
-```shell
+```
 hkd &
 sudo udevmon -c <path-to-file>/config.yaml
 ```
@@ -53,4 +53,4 @@ sudo udevmon -c <path-to-file>/config.yaml
 * [Interception Tools](https://gitlab.com/interception/linux/tools)
 ---
 
-*NOTICE*: Please open an issue if you find a bug
+*NOTICE*: Please check the issues board if you find a bug or would like a feature added. Open a new issue if it is not listed.
