@@ -1,7 +1,7 @@
 #include <linux/input-event-codes.h>
 #include <stdio.h>
 
-#define LENGTH(X) sizeof X / sizeof X[0]
+
 typedef unsigned short key_code;
 
 struct binding {
@@ -22,6 +22,7 @@ static const key_code mods[][2] = { { KEY_LEFTSHIFT, KEY_RIGHTSHIFT },
 #define M_ALT   0b0100
 #define M_META  0b0010
 #define M_CTRL  0b0001
+
 
 /* commands */
 /* requires pulseaudio */
@@ -45,6 +46,7 @@ static const char *launcher[] = { "dmenu_run", NULL };
 static const char *shutdown[] = { "shutdown", "now", NULL };
 
 /* bindings */
+/* https://www.kernel.org/doc/html/latest/input/event-codes.html */
 static const struct binding bindings[] = {
 	/* modifier mask         key code             command */
 	{ M_NONE,                KEY_VOLUMEUP,        vol_up },

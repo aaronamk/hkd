@@ -10,6 +10,18 @@
 #include "config.h"
 
 
+void print_usage(const char *program) {
+	fprintf(stdout,
+	        "runs commands based on signal integers\n"
+	        "\n"
+	        "usage: %s [options]\n"
+	        "\n"
+	        "options:\n"
+	        " -h  show this message and exit\n",
+	        program);
+}
+
+
 /**
  * Execute a command in a seperate process
  */
@@ -34,25 +46,17 @@ void handle_sig(int signo, siginfo_t *info, void *extra) {
 }
 
 
-void print_usage(const char *program) {
-	fprintf(stdout,
-	        "Hotkey daemon plugin for interception tools:\n"
-	        "        https://gitlab.com/interception/linux/tools\n"
-	        "\n"
-	        "usage: %s [-h]\n"
-	        "\n"
-	        "options:\n"
-	        "    -h                   show this message and exit\n",
-	        program);
-}
-
-
 int main(int argc, char *argv[]) {
 	int opt;
 	while ((opt = getopt(argc, argv, "h")) != -1) {
 		switch (opt) {
 			case 'h':
-				return print_usage(argv[0]), EXIT_SUCCESS;
+				print_usage(argv[0]);
+				exit(EXIT_SUCCESS);
+			case '?':
+				fprintf(stderr, "%s: invalid option: %c\n", argv[0], opt);
+				print_usage(argv[0]);
+				exit(EXIT_FAILURE);
 		}
 	}
 
@@ -65,4 +69,6 @@ int main(int argc, char *argv[]) {
 		sigaction(SIGUSR1, &action, NULL);
 		sigsuspend(&mask);
 	}
+
+	return EXIT_SUCCESS;
 }
