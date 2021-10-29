@@ -44,6 +44,10 @@ void *handle_device(void *path) {
 		exit(EXIT_FAILURE);
 	}
 
+	/* send pending events */
+	struct input_event input = {};
+	rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
+	                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);
 	/* grab device */
 	if (libevdev_grab(dev, LIBEVDEV_GRAB) < 0) {
 		libevdev_free(dev);
@@ -64,7 +68,6 @@ void *handle_device(void *path) {
 	}
 
 	/* relay events to the event handler */
-	struct input_event input = {};
 	do {
 		rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
 		                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);

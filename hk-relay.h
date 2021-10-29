@@ -83,8 +83,8 @@ int handle_event(struct input_event input) {
 	unsigned int mod_mask;
 	switch (input.value) {
 		case INPUT_VAL_PRESS:
-		case INPUT_VAL_REPEAT:
 			last_press = input.code;
+		case INPUT_VAL_REPEAT:
 			if ((mod_mask = get_mod_mask(input.code))
 			 || !try_hotkey(input.code)) {
 				mod_state |= mod_mask;
