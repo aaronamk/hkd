@@ -26,7 +26,7 @@ int find_hkd() {
 
 	char pid_str[20];
 	fgets(pid_str, 20, cache);
-	fclose(cache);
+	pclose(cache);
 	pid = strtoul(pid_str, NULL, 10);
 	return pid;
 }
@@ -83,8 +83,8 @@ int handle_event(struct input_event input) {
 	unsigned int mod_mask;
 	switch (input.value) {
 		case INPUT_VAL_PRESS:
-			last_press = input.code;
 		case INPUT_VAL_REPEAT:
+			last_press = input.code;
 			if ((mod_mask = get_mod_mask(input.code))
 			 || !try_hotkey(input.code)) {
 				mod_state |= mod_mask;

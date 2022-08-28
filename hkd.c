@@ -11,14 +11,13 @@
 
 
 void print_usage(const char *program) {
-	fprintf(stdout,
-	        "runs commands based on signal integers\n"
-	        "\n"
-	        "usage: %s [options]\n"
-	        "\n"
-	        "options:\n"
-	        " -h  show this message and exit\n",
-	        program);
+	printf("Run commands based on signals\n"
+	       "\n"
+	       "Usage: %s [options]\n"
+	       "\n"
+	       "Options:\n"
+	       " -h  show this message and exit\n",
+	       program);
 }
 
 
@@ -38,8 +37,8 @@ void spawn(char *cmd[]) {
 
 
 /**
- * Execute associated command from bindings array based
- * on the passed signal value
+ * Execute associated command from bindings array based on the passed signal
+ * value
  */
 void handle_sig(int signo, siginfo_t *info, void *extra) {
 	spawn((char**)bindings[info->si_value.sival_int].cmd);
