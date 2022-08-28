@@ -26,7 +26,7 @@ int find_hkd() {
 
 	char pid_str[20];
 	fgets(pid_str, 20, cache);
-	fclose(cache);
+	pclose(cache);
 	pid = strtoul(pid_str, NULL, 10);
 	return pid;
 }

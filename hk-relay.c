@@ -13,17 +13,15 @@ _Atomic(key_code) last_press = 0;
 
 
 void print_usage(const char *program) {
-	fprintf(stdout,
-	        "\n"
-	        "usage: %s [options]\n"
-	        "\n"
-	        "Signal hkd based on info from libevdev device key events"
-	        "\n"
-	        "options:\n"
-	        " -h               show this message and exit\n"
-	        " -d <devices>     comma-delimited list of device paths"
-	        "                  (/dev/input/<device>) to be monitored\n",
-	        program);
+	printf("Signal hkd based on info from libevdev device key events\n"
+	       "\n"
+	       "Usage: %s [options]\n"
+	       "\n"
+	       "Options:\n"
+	       " -h               show this message and exit\n"
+	       " -d <devices>     comma-delimited list of device paths"
+	                        " (/dev/input/<device>) to be monitored\n",
+	       program);
 }
 
 
@@ -44,6 +42,10 @@ void *handle_device(void *path) {
 		exit(EXIT_FAILURE);
 	}
 
+	/* send pending events */
+	struct input_event input = {};
+	rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
+	                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);
 	/* grab device */
 	if (libevdev_grab(dev, LIBEVDEV_GRAB) < 0) {
 		libevdev_free(dev);
@@ -64,7 +66,6 @@ void *handle_device(void *path) {
 	}
 
 	/* relay events to the event handler */
-	struct input_event input = {};
 	do {
 		rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
 		                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);
@@ -114,11 +115,11 @@ int main(int argc, char *argv[]) {
 				devs = strdup(optarg);
 				continue;
 			case ':':
-				fprintf(stderr, "%s: missing argument for option: %c\n", argv[0], opt);
+				fprintf(stderr, "%s: missing argument for option: %c\n", argv[0], optopt);
 				print_usage(argv[0]);
 				exit(EXIT_FAILURE);
 			case '?':
-				fprintf(stderr, "%s: invalid option: %c\n", argv[0], opt);
+				fprintf(stderr, "%s: invalid option: %c\n", argv[0], optopt);
 				print_usage(argv[0]);
 				exit(EXIT_FAILURE);
 		}
