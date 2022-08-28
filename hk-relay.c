@@ -7,6 +7,8 @@
 
 #include "hk-relay.h"
 
+#define VERSION "v0.2"
+
 
 _Atomic(unsigned int) mod_state = 0;
 _Atomic(key_code) last_press = 0;
@@ -19,6 +21,7 @@ void print_usage(const char *program) {
 	       "\n"
 	       "Options:\n"
 	       " -h               show this message and exit\n"
+	       " -V               print version number and exit\n"
 	       " -d <devices>     comma-delimited list of device paths"
 	                        " (/dev/input/<device>) to be monitored\n",
 	       program);
@@ -81,7 +84,6 @@ void *handle_device(void *path) {
 		}
 	} while (rc == 1 || rc == 0 || rc == -EAGAIN);
 
-
 	/* cleanup */
 	libevdev_grab(dev, LIBEVDEV_UNGRAB);
 	libevdev_free(dev);
@@ -106,10 +108,13 @@ int main(int argc, char *argv[]) {
 	/* parse options */
 	int opt;
 	char *devs = NULL;
-	while ((opt = getopt(argc, argv, ":hd:")) != -1) {
+	while ((opt = getopt(argc, argv, ":hVd:")) != -1) {
 		switch (opt) {
 			case 'h':
 				print_usage(argv[0]);
+				exit(EXIT_SUCCESS);
+			case 'V':
+				printf("%s %s\n", argv[0], VERSION);
 				exit(EXIT_SUCCESS);
 			case 'd':
 				devs = strdup(optarg);
