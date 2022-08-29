@@ -1,6 +1,14 @@
+/**
+ * Hotkey Daemon sample config.h
+ *
+ * Author: aaronamk
+ */
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #include <linux/input-event-codes.h>
 #include <stdio.h>
-
 
 typedef unsigned short key_code;
 
@@ -64,3 +72,5 @@ static const struct binding bindings[] = {
 	{ M_NONE,                KEY_RIGHTMETA,       launcher },
 	{ M_CTRL|M_ALT,          KEY_DELETE,          shutdown }
 };
+
+#endif
