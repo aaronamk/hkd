@@ -88,20 +88,18 @@ int handle_event(struct input_event input) {
 	if (input.type != EV_KEY) return 0;
 
 	/* handle keys */
-	unsigned int mod_mask;
+	unsigned int mod_mask = get_mod_mask(input.code);
 	switch (input.value) {
 		case INPUT_VAL_PRESS:
 		case INPUT_VAL_REPEAT:
 			last_press = input.code;
-			if ((mod_mask = get_mod_mask(input.code))
-			 || !try_hotkey(input.code)) {
-				mod_state |= mod_mask;
-				return 0;
-			}
-			return 1;
+			mod_state |= mod_mask;
+	fflush(stdout);
+			return !mod_mask && try_hotkey(input.code);
 		case INPUT_VAL_RELEASE:
-			if ((mod_mask = get_mod_mask(input.code))) {
+			if (mod_mask) {
 				mod_state ^= mod_mask;
+	fflush(stdout);
 				if (last_press == input.code) try_hotkey(input.code);
 			}
 			return 0;
@@ -130,11 +128,6 @@ void *handle_device(void *path) {
 		exit(EXIT_FAILURE);
 	}
 
-	/* send pending events */
-	struct input_event input = {};
-	rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
-	                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);
-
 	/* grab device */
 	if (libevdev_grab(dev, LIBEVDEV_GRAB) < 0) {
 		libevdev_free(dev);
@@ -155,6 +148,7 @@ void *handle_device(void *path) {
 	}
 
 	/* relay events to the event handler */
+	struct input_event input = {};
 	do {
 		rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
 		                            | LIBEVDEV_READ_FLAG_BLOCKING, &input);
@@ -165,7 +159,7 @@ void *handle_device(void *path) {
 
 		/* send event */
 		if (libevdev_uinput_write_event(virtual_dev, input.type, input.code,
-			                            input.value) < 0) {
+		                                input.value) < 0) {
 			fprintf(stderr, "Error: failed to send event\n");
 		}
 	} while (running && (rc == 1 || rc == 0 || rc == -EAGAIN));
