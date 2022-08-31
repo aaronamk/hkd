@@ -29,7 +29,7 @@ hkd -d /dev/input/by-id/<device1>,/dev/input/by-id/<device2>,...
 ```
 
 ## RELATED/SIMILAR SOFTWARE
-* [sxhkd](https://github.com/baskerville/sxhkd)
+* [swhkd](https://github.com/waycrate/swhkd)
 * [Interception Tools](https://gitlab.com/interception/linux/tools)
 ---
 
