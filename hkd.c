@@ -31,13 +31,14 @@ _Atomic(int) running = 1;
 void print_usage(const char *program) {
 	printf("Signal hkd based on info from libevdev device key events\n"
 	       "\n"
-	       "Usage: %s [options]\n"
+	       "Usage: %s [options] <devices>\n"
 	       "\n"
 	       "Options:\n"
-	       " -h               show this message and exit\n"
-	       " -V               print version number and exit\n"
-	       " -d <devices>     comma-delimited list of device paths"
-	                        " (/dev/input/<device>) to be monitored\n",
+	       " -h        show this message and exit\n"
+	       " -V        print version number and exit\n"
+	       "\n"
+	       "devices:   space-separated list of device paths"
+	                 " (/dev/input/by-...) to be monitored\n",
 	       program);
 }
 
@@ -177,8 +178,7 @@ void *handle_device(void *path) {
 int main(int argc, char *argv[]) {
 	/* parse options */
 	int opt;
-	char *devs = NULL;
-	while ((opt = getopt(argc, argv, ":hVd:")) != -1) {
+	while ((opt = getopt(argc, argv, ":hV")) != -1) {
 		switch (opt) {
 			case 'h':
 				print_usage(argv[0]);
@@ -186,13 +186,6 @@ int main(int argc, char *argv[]) {
 			case 'V':
 				printf("%s %s\n", argv[0], VERSION);
 				exit(EXIT_SUCCESS);
-			case 'd':
-				devs = strdup(optarg);
-				continue;
-			case ':':
-				fprintf(stderr, "Error: missing argument for option: %c\n", optopt);
-				print_usage(argv[0]);
-				exit(EXIT_FAILURE);
 			case '?':
 				fprintf(stderr, "Error: invalid option: %c\n", optopt);
 				print_usage(argv[0]);
@@ -208,34 +201,27 @@ int main(int argc, char *argv[]) {
 	sigaction(SIGTERM, NULL, &terminate);
 	sigaction(SIGHUP, NULL, &terminate);
 
-	/* ensure program has input access */
+	/* TODO: ensure program has input access */
 
-	if (devs == NULL) {
-		fprintf(stderr, "Error: device not specified\n");
+	/* ensure a device was provided */
+	int dev_count = argc - optind;
+	if (!dev_count) {
+		fprintf(stderr, "Error: device path not specified\n");
 		print_usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
-	/* count devices */
-	int dev_count = 1;
-	int i;
-	for (i = 0; devs[i]; i++) if (devs[i] == ',') dev_count++;
-
 	/* create thread for each device */
 	pthread_t threads[dev_count];
-	char *dev_path = strtok(devs, ",");
-	for (i = 0; i < dev_count; i++) {
+	for (int i = 0; i < dev_count; i++) {
 		if (pthread_create(&threads[i], NULL, handle_device,
-		                   (void*)dev_path)) {
+		                   (void*)argv[optind + i])) {
 			fprintf(stderr, "Error: failed to create thread.");
 			exit(EXIT_FAILURE);
 		}
-		dev_path = strtok(NULL, ",");
 	}
-
-	void *status;
-	for (i = 0; i < dev_count; i++) {
-		if (pthread_join(threads[i], &status)) {
+	for (int i = 0; i < dev_count; i++) {
+		if (pthread_join(threads[i], NULL)) {
 			fprintf(stderr, "Error: failed to join thread.");
 			exit(EXIT_FAILURE);
 		}
