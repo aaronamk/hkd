@@ -17,7 +17,7 @@
 #include <linux/input.h>
 #include <libevdev/libevdev-uinput.h>
 
-#define VERSION "v0.2"
+#define VERSION "v1.0.0"
 #define INPUT_VAL_PRESS 1
 #define INPUT_VAL_RELEASE 0
 #define INPUT_VAL_REPEAT 2
