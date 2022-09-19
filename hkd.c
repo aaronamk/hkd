@@ -167,7 +167,6 @@ void *handle_device(void *path) {
 
 	/* cleanup */
 	libevdev_uinput_destroy(virtual_dev);
-	libevdev_grab(dev, LIBEVDEV_UNGRAB);
 	libevdev_free(dev);
 	close(fd);
 
