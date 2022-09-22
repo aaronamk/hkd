@@ -26,6 +26,8 @@
 _Atomic(unsigned int) mod_state = 0;
 _Atomic(key_code) last_press = 0;
 _Atomic(int) running = 1;
+pthread_t threads[MAX_DEVICES];
+int dev_count;
 
 
 void print_usage(const char *program) {
@@ -43,7 +45,10 @@ void print_usage(const char *program) {
 }
 
 
-void handle_terminate(int signum) { running = 0; }
+void handle_terminate(int signum) {
+	running = 0;
+	for (int i = 0; i < dev_count; i++) pthread_kill(threads[i], SIGUSR1);
+}
 
 
 void spawn(char *cmd[]) {
@@ -85,22 +90,20 @@ int try_hotkey(key_code key) {
 int handle_event(struct input_event input) {
 	if (input.type == EV_MSC && input.code == MSC_SCAN) return 0;
 
-	/* forward anything that is not a key event, including SYNs */
+	/* forward anything that is not a key event */
 	if (input.type != EV_KEY) return 0;
 
-	/* handle keys */
+	/* handle key events */
 	unsigned int mod_mask = get_mod_mask(input.code);
 	switch (input.value) {
-		case INPUT_VAL_PRESS:
-		case INPUT_VAL_REPEAT:
+		case 1: /* key press event */
+		case 2: /* key repeat event */
 			last_press = input.code;
 			mod_state |= mod_mask;
-	fflush(stdout);
 			return !mod_mask && try_hotkey(input.code);
-		case INPUT_VAL_RELEASE:
+		case 0: /* key release event */
 			if (mod_mask) {
 				mod_state ^= mod_mask;
-	fflush(stdout);
 				if (last_press == input.code) try_hotkey(input.code);
 			}
 			return 0;
@@ -113,6 +116,10 @@ int handle_event(struct input_event input) {
 
 
 void *handle_device(void *path) {
+	struct sigaction ignore;
+	ignore.sa_flags = 0;
+	ignore.sa_handler = NULL;
+	sigaction(SIGINT, &ignore, NULL);
 	/* open device file */
 	int fd = open((char*)path, O_RDONLY);
 	if (fd < 0) {
@@ -148,7 +155,7 @@ void *handle_device(void *path) {
 		exit(EXIT_FAILURE);
 	}
 
-	/* relay events to the event handler */
+	/* handle key events */
 	struct input_event input = {};
 	do {
 		rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL
@@ -158,7 +165,7 @@ void *handle_device(void *path) {
 		/* continue if event was handled */
 		if (handle_event(input)) continue;
 
-		/* send event */
+		/* forward events not associated with a binding */
 		if (libevdev_uinput_write_event(virtual_dev, input.type, input.code,
 		                                input.value) < 0) {
 			fprintf(stderr, "Error: failed to send event\n");
@@ -166,10 +173,9 @@ void *handle_device(void *path) {
 	} while (running && (rc == 1 || rc == 0 || rc == -EAGAIN));
 
 	/* cleanup */
-	libevdev_uinput_destroy(virtual_dev);
 	libevdev_grab(dev, LIBEVDEV_UNGRAB);
 	libevdev_free(dev);
-	close(fd);
+	libevdev_uinput_destroy(virtual_dev); // closes fd
 
 	return NULL;
 }
@@ -193,26 +199,30 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	/* catch termination signals to exit gracefully */
-	struct sigaction terminate;
-	terminate.sa_flags = 0;
-	terminate.sa_handler = handle_terminate;
-	sigaction(SIGINT, NULL, &terminate);
-	sigaction(SIGTERM, NULL, &terminate);
-	sigaction(SIGHUP, NULL, &terminate);
-
-	/* TODO: ensure program has input access */
-
-	/* ensure a device was provided */
-	int dev_count = argc - optind;
+	/* validate number of devices */
+	dev_count = argc - optind;
 	if (!dev_count) {
 		fprintf(stderr, "Error: device path not specified\n");
 		print_usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
+	if (dev_count > MAX_DEVICES) {
+		fprintf(stderr, "Error: Exceeded MAX_DEVICES (increase the value in "
+		                "config.h)\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/* TODO: ensure program has input access */
+
+	/* catch termination signals to exit gracefully */
+	struct sigaction terminate;
+	terminate.sa_flags = 0;
+	terminate.sa_handler = handle_terminate;
+	sigaction(SIGINT, &terminate, NULL);
+	sigaction(SIGTERM, &terminate, NULL);
+	sigaction(SIGHUP, &terminate, NULL);
 
 	/* create thread for each device */
-	pthread_t threads[dev_count];
 	for (int i = 0; i < dev_count; i++) {
 		if (pthread_create(&threads[i], NULL, handle_device,
 		                   (void*)argv[optind + i])) {
@@ -220,12 +230,6 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 	}
-	for (int i = 0; i < dev_count; i++) {
-		if (pthread_join(threads[i], NULL)) {
-			fprintf(stderr, "Error: failed to join thread.");
-			exit(EXIT_FAILURE);
-		}
-	}
 
-	return EXIT_SUCCESS;
+	pthread_exit(EXIT_SUCCESS);
 }

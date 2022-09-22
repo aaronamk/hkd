@@ -18,6 +18,9 @@ struct binding {
 	const void *cmd;
 };
 
+/* Maximum number of keyboards to allow via the command line */
+#define MAX_DEVICES 32
+
 /* any key can be used as a modifier (e.g. caps lock), these are just the most common ones: */
 static const key_code mods[][2] = { { KEY_LEFTSHIFT, KEY_RIGHTSHIFT },
                                     { KEY_LEFTALT,   KEY_RIGHTALT },
