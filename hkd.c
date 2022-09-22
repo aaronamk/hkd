@@ -115,11 +115,12 @@ int handle_event(struct input_event input) {
 }
 
 
+void nop(int signum) {}
 void *handle_device(void *path) {
 	struct sigaction ignore;
 	ignore.sa_flags = 0;
-	ignore.sa_handler = NULL;
-	sigaction(SIGINT, &ignore, NULL);
+	ignore.sa_handler = nop;
+	sigaction(SIGUSR1, &ignore, NULL);
 	/* open device file */
 	int fd = open((char*)path, O_RDONLY);
 	if (fd < 0) {
