@@ -109,7 +109,7 @@ int handle_event(struct input_event input) {
 			return 0;
 		default:
 			fprintf(stderr, "unexpected .value=%d .code=%d, doing nothing",
-					input.value, input.code);
+			                input.value, input.code);
 			return 0;
 	}
 }
@@ -125,7 +125,7 @@ void *handle_device(void *path) {
 	int fd = open((char*)path, O_RDONLY);
 	if (fd < 0) {
 		fprintf(stderr, "Error: failed to open device: %s\n", (char*)path);
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	/* open device */
@@ -133,8 +133,9 @@ void *handle_device(void *path) {
 	int rc = libevdev_new_from_fd(fd, &dev);
 	if (rc < 0) {
 		close(fd);
-		fprintf(stderr, "Error: failed to init libevdev (%s)\n", strerror(-rc));
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Error: failed to init libevdev (%s)\n",
+		                strerror(-rc));
+		return NULL;
 	}
 
 	/* grab device */
@@ -142,7 +143,7 @@ void *handle_device(void *path) {
 		libevdev_free(dev);
 		close(fd);
 		fprintf(stderr, "Error: failed to grab device\n");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	/* create virtual uinput device */
@@ -153,7 +154,7 @@ void *handle_device(void *path) {
 		libevdev_free(dev);
 		close(fd);
 		fprintf(stderr, "Error: failed to create virtual uinput device\n");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	/* handle key events */
@@ -178,7 +179,7 @@ void *handle_device(void *path) {
 	libevdev_free(dev);
 	libevdev_uinput_destroy(virtual_dev); // closes fd
 
-	return NULL;
+	return EXIT_SUCCESS;
 }
 
 
@@ -212,8 +213,6 @@ int main(int argc, char *argv[]) {
 		                "config.h)\n");
 		exit(EXIT_FAILURE);
 	}
-
-	/* TODO: ensure program has input access */
 
 	/* catch termination signals to exit gracefully */
 	struct sigaction terminate;
